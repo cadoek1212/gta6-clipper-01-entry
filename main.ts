@@ -8,8 +8,9 @@
 //
 // It copies the raw bytes, never re-serializes, so the two graded runs
 // always write identical bytes. It refuses to run when VIDEO.json is
-// missing or is not a JSON object with a string "url", so a bad file fails
-// loudly here instead of silently passing an empty output along.
+// missing, is not a JSON object with a string "url", or the url is not a
+// well-formed YouTube Shorts URL, so a bad file fails loudly here instead
+// of silently passing an empty or wrong output along.
 //
 // Local run (mirrors the grader):
 //   mkdir -p out && MAKEFUN_BOT_DIR=. MAKEFUN_OUTPUT_DIR=out node main.ts
@@ -45,6 +46,15 @@ if (
   typeof (parsed as { url?: unknown }).url !== 'string'
 ) {
   console.error('VIDEO.json must be an object with a string "url" field');
+  process.exit(1);
+}
+
+const url = (parsed as { url: string }).url;
+const shortsPattern = /^https:\/\/www\.youtube\.com\/shorts\/[A-Za-z0-9_-]{11}$/;
+if (!shortsPattern.test(url)) {
+  console.error(
+    `VIDEO.json "url" must be a YouTube Shorts URL (https://www.youtube.com/shorts/<11-char id>), got: ${url}`,
+  );
   process.exit(1);
 }
 
